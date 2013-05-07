@@ -1,0 +1,23 @@
+﻿<Window x:Class="PronunciationConverter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Pronunciation Converter prototype" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" Height="338" Width="523">
+    <Grid>
+        <Button Content="Speak" Height="23" HorizontalAlignment="Left" Margin="12,263,0,0" Name="speakButton" VerticalAlignment="Top" Width="75" Click="speakButton_Click" />
+        <ComboBox Height="24" HorizontalAlignment="Left" Margin="12,233,0,0" Name="selectVoice" VerticalAlignment="Top" Width="479" />
+        <TextBox Height="73" HorizontalAlignment="Left" Margin="22,144,0,0" Name="recognized" VerticalAlignment="Top" Width="469" Text="Do you know how to go to the airport?" TextWrapping="Wrap" />
+        <Button Content="Recognize" Height="23" HorizontalAlignment="Left" Margin="12,88,0,0" Name="recognizeButton" VerticalAlignment="Top" Width="75" Click="recognizeButton_Click" />
+        <Button Content="Speak to file" Height="23" Margin="93,263,297,0" Name="speakToFileButton" VerticalAlignment="Top" Click="speakToFileButton_Click" />
+        <Button Content="Choose file" Height="23" HorizontalAlignment="Left" Margin="12,46,0,0" Name="chooseFileButton" VerticalAlignment="Top" Width="75" Click="chooseFileButton_Click" />
+        <Label Content="Input:" Height="28" HorizontalAlignment="Left" Margin="12,12,0,0" Name="label1" VerticalAlignment="Top" />
+        <TextBox Height="24" HorizontalAlignment="Left" Margin="135,47,0,0" Name="inputFilePath" VerticalAlignment="Top" Width="275" />
+        <Label Content="path:" Height="28" HorizontalAlignment="Left" Margin="93,43,0,0" Name="label2" VerticalAlignment="Top" />
+        <Label Content="Recognized (or input) text:" Height="28" HorizontalAlignment="Left" Margin="14,118,0,0" Name="label3" VerticalAlignment="Top" />
+        <RadioButton Content="file" Height="16" HorizontalAlignment="Left" Margin="65,17,0,0" Name="inputFromFile" VerticalAlignment="Top" IsChecked="True" GroupName="chooseInput" />
+        <RadioButton Content="microphone" Height="16" HorizontalAlignment="Right" Margin="0,17,314,0" Name="inputFromMicrophone" VerticalAlignment="Top" GroupName="chooseInput" />
+        <Separator Height="5" HorizontalAlignment="Left" Margin="14,77,0,0" Name="separator1" VerticalAlignment="Top" Width="477" />
+        <Separator Height="2" HorizontalAlignment="Left" Margin="14,225,0,0" Name="separator2" VerticalAlignment="Top" Width="477" />
+        <Button Content="Play" Height="23" HorizontalAlignment="Left" Margin="416,47,0,0" Name="playButton" VerticalAlignment="Top" Width="75" Click="playButton_Click" />
+        <Button Content="Convert (recognize + speak)" Height="23" HorizontalAlignment="Left" Margin="93,88,0,0" Name="convertButton" VerticalAlignment="Top" Width="200" />
+    </Grid>
+</Window>
