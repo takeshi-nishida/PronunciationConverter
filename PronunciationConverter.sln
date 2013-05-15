@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PronunciationConverter", "PronunciationConverter\PronunciationConverter.csproj", "{679292FB-1278-4E06-A780-054FFBB3EAB6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PronunciationConverter2", "PronunciationConverter2\PronunciationConverter2.csproj", "{42945CE1-94C5-40C7-9215-6260C1774FDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -13,6 +15,10 @@ Global
 		{679292FB-1278-4E06-A780-054FFBB3EAB6}.Debug|x86.Build.0 = Debug|x86
 		{679292FB-1278-4E06-A780-054FFBB3EAB6}.Release|x86.ActiveCfg = Release|x86
 		{679292FB-1278-4E06-A780-054FFBB3EAB6}.Release|x86.Build.0 = Release|x86
+		{42945CE1-94C5-40C7-9215-6260C1774FDE}.Debug|x86.ActiveCfg = Debug|x86
+		{42945CE1-94C5-40C7-9215-6260C1774FDE}.Debug|x86.Build.0 = Debug|x86
+		{42945CE1-94C5-40C7-9215-6260C1774FDE}.Release|x86.ActiveCfg = Release|x86
+		{42945CE1-94C5-40C7-9215-6260C1774FDE}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
