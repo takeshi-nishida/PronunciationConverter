@@ -1,22 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Microsoft.Win32;
-using System.Globalization;
 using System.Media;
 using System.Speech.Recognition;
-using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Speech.Synthesis;
+using Microsoft.Win32;
 
 namespace PronunciationConverter2
 {
@@ -42,6 +32,7 @@ namespace PronunciationConverter2
             historyList.ItemsSource = results;
 
             synthesizer = new SpeechSynthesizer();
+
             foreach (InstalledVoice voice in synthesizer.GetInstalledVoices())
             {
                 selectVoice.Items.Add(voice.VoiceInfo);
@@ -107,41 +98,72 @@ namespace PronunciationConverter2
         void sre_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
             results.Add(e.Result);
+            if (realtimeMode.IsChecked == true)
+            {
+                speakRealtime(e.Result);
+            }
         }
 
         ///////////////////////////////////////////////////////////////////////
         // Speak
         ///////////////////////////////////////////////////////////////////////
 
-        private void speak()
+               
+        private void speakRealtime(RecognitionResult r)
+        {
+            initSynthesizer(false);
+            feedSynthesizer(r);
+            player.Stream.Position = 0;
+            player.Play();
+        }
+
+        private void speak(bool toFile)
         {
             if (results.Count > 0)
             {
-                synthesizer.Volume = 100;
-                //synthesizer.Rate = -2;
-                synthesizer.SelectVoice((selectVoice.SelectedItem as VoiceInfo).Name);
-
-                player = new SoundPlayer();
-                player.Stream = new System.IO.MemoryStream();
-                synthesizer.SetOutputToWaveStream(player.Stream);
-
-                foreach (RecognitionResult r in results)
+                initSynthesizer(toFile);
+                foreach (RecognitionResult r in results) feedSynthesizer(r);
+                if (toFile)
                 {
-                    if (usePhoneme.IsChecked == true)
-                        synthesizer.Speak(buildPromptBuilder(r));
-                    else
-                        synthesizer.Speak(r.Text);
+                    synthesizer.SetOutputToNull();
+                    MessageBox.Show("Conversion finished.");
+                }
+                else
+                {
+                    player.Stream.Position = 0;
+                    player.Play();
                 }
 
-                player.Stream.Position = 0;
-                player.Play();
             }
         }
 
-        private void speakToFile()
+        private void initSynthesizer(bool toFile)
         {
-            MessageBox.Show("Speak to file is not implemented yet.");
+            synthesizer.Volume = 100;
+            synthesizer.Rate = (int)rateSlider.Value;
+            synthesizer.SelectVoice((selectVoice.SelectedItem as VoiceInfo).Name);
+
+            if (toFile)
+            {
+                String fname = System.IO.Path.Combine(outputFilePath.Text, System.DateTime.Now.ToString("yyyyMMddHHmmss") + ".wav");
+                synthesizer.SetOutputToWaveFile(fname);
+            }
+            else
+            {
+                player = new SoundPlayer();
+                player.Stream = new System.IO.MemoryStream();
+                synthesizer.SetOutputToWaveStream(player.Stream);
+            }
         }
+
+        private void feedSynthesizer(RecognitionResult r)
+        {
+            if (usePhoneme.IsChecked == true)
+                synthesizer.Speak(buildPromptBuilder(r));
+            else
+                synthesizer.Speak(r.Text);
+        }
+
 
         private PromptBuilder buildPromptBuilder(RecognitionResult result)
         {
@@ -154,7 +176,7 @@ namespace PronunciationConverter2
                 //    pb.AppendTextWithPronunciation(w.Text, w.Pronunciation);
                 //else
                 //    pb.AppendText(w.Text + " ");
-                pb.AppendTextWithPronunciation(w.Text, w.Pronunciation);
+                pb.AppendTextWithPronunciation(w.Text, Japanizer.japanize(w.Pronunciation, w.Text));
             }
             pb.AppendSsmlMarkup("</voice>");
             return pb;
@@ -176,7 +198,7 @@ namespace PronunciationConverter2
             dialog.Filter = "wav files|*.wav";
             
 
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog().Equals(true))
             {
                 inputFilePath.Text = dialog.FileName;
             }
@@ -184,7 +206,7 @@ namespace PronunciationConverter2
 
         private void selectFolderButton_Click(object sender, RoutedEventArgs e)
         {
-
+            outputFilePath.Text = FolderSelector.select();
         }
 
         private void playButton_Click(object sender, RoutedEventArgs e)
@@ -194,14 +216,8 @@ namespace PronunciationConverter2
 
         private void startButton_Click(object sender, RoutedEventArgs e)
         {
-            if (inputFromFile.IsChecked == true)
-            {
-                recognizeFile();
-            }
-            else if(inputFromMicrophone.IsChecked == true)
-            {
-                startRecognizing();
-            }
+            if (inputFromFile.IsChecked == true) recognizeFile();
+            else if(inputFromMicrophone.IsChecked == true) startRecognizing();
         }
 
         private void stopButton_Click(object sender, RoutedEventArgs e)
@@ -211,7 +227,8 @@ namespace PronunciationConverter2
 
         private void speakButton_Click(object sender, RoutedEventArgs e)
         {
-            speak();
+            if (outputToFile.IsChecked == true) speak(true);
+            else if (outputToSpeaker.IsChecked == true) speak(false);
         }
 
         private void historyList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -223,6 +240,16 @@ namespace PronunciationConverter2
                 ObservableCollection<RecognizedPhrase> alternates = new ObservableCollection<RecognizedPhrase>(r.Alternates);
                 
                 dataGrid.ItemsSource = alternates;
+            }
+        }
+
+        private void dataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+            {
+                RecognizedPhrase phrase = e.AddedItems[0] as RecognizedPhrase;
+                String text = String.Join(" ", phrase.Words.Select(w => w.Pronunciation)) + "," + String.Join(" ", phrase.Words.Select(w => Japanizer.japanize(w.Pronunciation, w.Text)));
+                Clipboard.SetText(text);
             }
         }
 

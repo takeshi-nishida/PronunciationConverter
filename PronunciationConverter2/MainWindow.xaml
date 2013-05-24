@@ -36,15 +36,15 @@
                 <ListBox.AlternationCount>2</ListBox.AlternationCount>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" ToolTip="{Binding Path=Words, Converter={StaticResource wordsConverter}}" />
+                        <TextBlock Text="{Binding Text, Mode=OneWay}" TextWrapping="Wrap" ToolTip="{Binding Path=Words, Converter={StaticResource wordsConverter}}" />
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
             <Label Content="Alternates" Grid.Row="2" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" />
-            <DataGrid Name="dataGrid" Grid.Row="3" AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+            <DataGrid Name="dataGrid" Grid.Row="3" AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" SelectionChanged="dataGrid_SelectionChanged">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Text}" Header="Text" />
-                    <DataGridTextColumn Binding="{Binding Path=Words, Converter={StaticResource wordsConverter}}" Header="Pronunciation" />
+                    <DataGridTextColumn Binding="{Binding Text, Mode=OneWay}" Header="Text" />
+                    <DataGridTextColumn Binding="{Binding Path=Words, Mode=OneWay, Converter={StaticResource wordsConverter}}" Header="Pronunciation" />
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
@@ -60,17 +60,20 @@
                 <RadioButton Content="File" Height="16" HorizontalAlignment="Left" Name="inputFromFile" VerticalAlignment="Top" Margin="70,6,0,0" Grid.Column="1" GroupName="input" IsChecked="True" />
             </Grid>
         </GroupBox>
-        <GroupBox Header="Output" Height="148" HorizontalAlignment="Left" Margin="12,100,0,0" VerticalAlignment="Top" Width="282">
+        <GroupBox Header="Output" Height="197" HorizontalAlignment="Left" Margin="12,100,0,0" VerticalAlignment="Top" Width="282">
             <Grid>
-                <CheckBox Content="Speaker" Height="16" HorizontalAlignment="Left" Name="outputToSpeaker" VerticalAlignment="Top" Margin="6,6,0,0" IsChecked="True" />
-                <CheckBox Content="File" Height="16" HorizontalAlignment="Left" Name="outputToFile" VerticalAlignment="Top" Margin="95,6,0,0" />
+                <RadioButton Content="Speaker" Height="16" HorizontalAlignment="Left" Name="outputToSpeaker" VerticalAlignment="Top" Margin="6,6,0,0" IsChecked="True" GroupName="output" />
+                <RadioButton Content="File" Height="16" HorizontalAlignment="Left" Name="outputToFile" VerticalAlignment="Top" Margin="95,6,0,0" GroupName="output" />
                 <Button Content="Select folder" Height="23" HorizontalAlignment="Left" Margin="6,28,0,0" Name="selectFolderButton" VerticalAlignment="Top" Width="80" Click="selectFolderButton_Click" IsEnabled="{Binding ElementName=outputToFile, Path=IsChecked}" />
                 <TextBox Height="24" HorizontalAlignment="Left" Margin="95,28,0,0" Name="outputFilePath" VerticalAlignment="Top" Width="169" />
-                <ComboBox Height="24" HorizontalAlignment="Left" Margin="6,93,0,0" Name="selectVoice" VerticalAlignment="Top" Width="258" DisplayMemberPath="Culture" />
-                <CheckBox Content="usePhoneme" Height="16" HorizontalAlignment="Left" Margin="6,57,0,0" Name="usePhoneme" VerticalAlignment="Top" IsChecked="True" />
+                <ComboBox Height="24" HorizontalAlignment="Left" Margin="95,101,0,0" Name="selectVoice" VerticalAlignment="Top" Width="168" DisplayMemberPath="Culture" />
+                <CheckBox Content="usePhoneme" Height="16" HorizontalAlignment="Left" Margin="6,66,0,0" Name="usePhoneme" VerticalAlignment="Top" IsChecked="True" />
+                <Slider Height="23" HorizontalAlignment="Left" Margin="95,139,0,0" Name="rateSlider" VerticalAlignment="Top" Width="168" Minimum="-5" SmallChange="1" IsSnapToTickEnabled="True" Maximum="5" TickPlacement="BottomRight" />
+                <Label Content="Speak speed:" Height="28" HorizontalAlignment="Left" Margin="5,134,0,0" Name="label1" VerticalAlignment="Top" />
+                <Label Content="Voice culture:" Height="28" HorizontalAlignment="Left" Margin="6,97,0,0" VerticalAlignment="Top" />
             </Grid>
         </GroupBox>
-        <GroupBox Header="Mode" Height="55" HorizontalAlignment="Left" Margin="12,254,0,0" Name="groupBox3" VerticalAlignment="Top" Width="282">
+        <GroupBox Header="Mode" Height="55" HorizontalAlignment="Left" Margin="12,303,0,0" Name="groupBox3" VerticalAlignment="Top" Width="282">
             <Grid>
                 <RadioButton Content="Realtime" GroupName="mode" Height="16" HorizontalAlignment="Left" Margin="5,6,0,0" Name="realtimeMode" VerticalAlignment="Top" />
                 <RadioButton Content="Use Speak button" GroupName="mode" Height="16" HorizontalAlignment="Left" IsChecked="True" Margin="78,6,0,0" Name="manualMode" VerticalAlignment="Top" />
@@ -78,7 +81,7 @@
         </GroupBox>
         <Button ButtonBase.Click="playButton_Click" Content="Play" Height="23" HorizontalAlignment="Right" Margin="0,0,210,5" Name="playButton" VerticalAlignment="Bottom" Width="60">
             <Button.IsEnabled>
-                <MultiBinding Converter="{StaticResource myConverter}">
+                <MultiBinding Converter="{StaticResource myConverter}" Mode="OneWay">
                     <Binding ElementName="inputFromFile" Path="IsChecked" />
                     <Binding ElementName="inputFilePath" Path="Text" />
                 </MultiBinding>
@@ -86,7 +89,7 @@
         </Button>
         <Button ButtonBase.Click="startButton_Click" Content="Start" Height="23" HorizontalAlignment="Left" Margin="102,0,0,5" Name="startButton" VerticalAlignment="Bottom" Width="60">
             <Button.IsEnabled>
-                <MultiBinding Converter="{StaticResource myConverter2}">
+                <MultiBinding Converter="{StaticResource myConverter2}" Mode="OneWay">
                     <Binding ElementName="outputToSpeaker" Path="IsChecked" />
                     <Binding ElementName="outputToFile" Path="IsChecked" />
                 </MultiBinding>
