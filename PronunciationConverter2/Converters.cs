@@ -42,7 +42,7 @@ namespace PronunciationConverter2
         {
             if (value == null) return "";
             ReadOnlyCollection<RecognizedWordUnit> words = value as ReadOnlyCollection<RecognizedWordUnit>;
-            return String.Join(" ", words.Select(w => w.Pronunciation));
+            return String.Join(" ", words.Select(w => Japanizer.japanize(w.Pronunciation, w.Text)));
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
