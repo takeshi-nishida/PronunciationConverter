@@ -8,10 +8,6 @@ namespace PronunciationConverter2
 {
     class Japanizer
     {
-        // pliz  juz  ðə fidbæk   fɔɻm  tə ɻikwɛst  ɛni ədɪʃənəl  ɪkspɻɛʃənz  ɔɻ ɪf jʊ hæv  ɛni səd͡ʒɛst͡ʃənz  fə˞ ðə sa͡it
-        // plizɯ jɯzɯ zə fidbakkɯ foːmɯ tə ɽikwɛsto ɛni ədɪʃənəlɯ ɪkspɽɛʃənzɯ oː ɪf jɯ habɯ ɛni səd͡ʒɛst͡ʃənzɯ fəː zə sa͡ito
-        // θæŋk ju ən gʊd lʌk,saŋkɯ ju ən gɯddo lakkɯ
-
         private const String oConsonants = "dt";
         private const String uConsonants = "bfgklmpsvz";
         private const String consonants = oConsonants + uConsonants;

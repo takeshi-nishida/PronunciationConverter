@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Speech.Synthesis;
 using Microsoft.Win32;
+using System.Collections.Generic;
 
 namespace PronunciationConverter2
 {
@@ -21,6 +22,7 @@ namespace PronunciationConverter2
 
         private string[] ngWords;
         private ObservableCollection<RecognitionResult> results;
+        private ObservableCollection<SettingSnapshot> settings;
 
         public MainWindow()
         {
@@ -30,6 +32,7 @@ namespace PronunciationConverter2
 
             results = new ObservableCollection<RecognitionResult>();
             historyList.ItemsSource = results;
+            initSettings();
 
             synthesizer = new SpeechSynthesizer();
 
@@ -188,6 +191,49 @@ namespace PronunciationConverter2
         //}
 
         ///////////////////////////////////////////////////////////////////////
+        // Setting
+        ///////////////////////////////////////////////////////////////////////
+
+        private void initSettings()
+        {
+            settings = new ObservableCollection<SettingSnapshot>();
+            settingBox.ItemsSource = settings;
+            List<SettingSnapshot> ls = SettingSnapshot.loadSettingSnapshots();
+            ls.ForEach(settings.Add);
+        }
+
+        private void restoreSetting(SettingSnapshot s)
+        {
+            inputFromFile.IsChecked = s.inputFromFile;
+            inputFromMicrophone.IsChecked = s.inputFromMicrophone;
+            inputFilePath.Text = s.inputFilePath;
+            outputToSpeaker.IsChecked = s.outputToSpeaker;
+            outputToFile.IsChecked = s.outputToFile;
+            outputFilePath.Text = s.outputFilePath;
+            usePhoneme.IsChecked = s.usePhoneme;
+            selectVoice.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name == s.voiceName).VoiceInfo;
+            rateSlider.Value = s.speakSpead;
+        }
+
+        private void saveSettings()
+        {
+            SettingSnapshot s = new SettingSnapshot(){
+                createdAt = System.DateTime.Now,
+                inputFromFile = inputFromFile.IsChecked == true,
+                inputFromMicrophone = inputFromMicrophone.IsChecked == true,
+                inputFilePath = inputFilePath.Text,
+                outputToFile = outputToFile.IsChecked == true,
+                outputToSpeaker = outputToSpeaker.IsChecked == true,
+                outputFilePath = outputFilePath.Text,
+                usePhoneme = usePhoneme.IsChecked == true,
+                voiceName = (selectVoice.SelectedItem as VoiceInfo).Name,
+                speakSpead = (int) rateSlider.Value
+            };
+            s.save();
+            settings.Add(s);
+        }
+
+        ///////////////////////////////////////////////////////////////////////
         // UI event handlers
         ///////////////////////////////////////////////////////////////////////
 
@@ -253,5 +299,18 @@ namespace PronunciationConverter2
             }
         }
 
+        private void saveSettingButton_Click(object sender, RoutedEventArgs e)
+        {
+            saveSettings();
+        }
+
+        private void settingBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+            {
+                SettingSnapshot s = e.AddedItems[0] as SettingSnapshot;
+                restoreSetting(s);
+            }
+        }
     }
 }
