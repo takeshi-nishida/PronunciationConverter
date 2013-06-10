@@ -19,6 +19,8 @@ namespace PronunciationConverter2
         public bool usePhoneme { get; set; }
         public string voiceName { get; set; }
         public int speakSpead { get; set; }
+        public bool realtimeMode { get; set; }
+        public bool manualMode { get; set; }
 
 
         public static List<SettingSnapshot> loadSettingSnapshots()
@@ -47,6 +49,17 @@ namespace PronunciationConverter2
         private static string getExecutingPath()
         {
             return Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
+        }
+
+        public string name
+        {
+            get {
+                string input = inputFromMicrophone ? "MIKE" : "FILE";
+                string output = outputToSpeaker ? "SPEAKER" : "FILE";
+                string mode = realtimeMode ? " RT" : "-RT";
+                string lang = voiceName.Substring(voiceName.IndexOf('('));
+                return String.Format("{2}: {0} to {1} {3} speed:{4}", input, output, mode, lang, speakSpead);
+        }
         }
     }
 }
