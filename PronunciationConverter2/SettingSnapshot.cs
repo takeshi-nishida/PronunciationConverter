@@ -4,33 +4,29 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Xml.Serialization;
+using System.Text.RegularExpressions;
 
 namespace PronunciationConverter2
 {
     public class SettingSnapshot
     {
         public DateTime createdAt { get; set; }
-        public bool inputFromMicrophone { get; set; }
-        public bool inputFromFile { get; set; }
+        public int selectedTabIndex { get; set; }
         public string inputFilePath { get; set; }
-        public bool outputToSpeaker { get; set; }
-        public bool outputToFile { get; set; }
-        public string outputFilePath { get; set; }
+        public string outputFolderPath { get; set; }
         public bool usePhoneme { get; set; }
         public string voiceName { get; set; }
         public int speakSpead { get; set; }
-        public bool realtimeMode { get; set; }
-        public bool manualMode { get; set; }
 
 
         public static List<SettingSnapshot> loadSettingSnapshots()
         {
             List<SettingSnapshot> ls = new List<SettingSnapshot>();
-            foreach(string fname in Directory.GetFiles(getExecutingPath(), "*.xml"))
+            foreach (string fname in Directory.GetFiles(getExecutingPath(), "*.xml"))
             {
                 XmlSerializer reader = new XmlSerializer(typeof(SettingSnapshot));
                 StreamReader file = new StreamReader(fname);
-                ls.Add((SettingSnapshot) reader.Deserialize(file));
+                ls.Add((SettingSnapshot)reader.Deserialize(file));
             }
             return ls;
         }
@@ -51,15 +47,15 @@ namespace PronunciationConverter2
             return Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
         }
 
+        private static Regex regex = new Regex(@"\(.*,");
+
         public string name
         {
-            get {
-                string input = inputFromMicrophone ? "MIKE" : "FILE";
-                string output = outputToSpeaker ? "SPEAKER" : "FILE";
-                string mode = realtimeMode ? " RT" : "-RT";
-                string lang = voiceName.Substring(voiceName.IndexOf('('));
-                return String.Format("{2}: {0} to {1} {3} speed:{4}", input, output, mode, lang, speakSpead);
-        }
+            get
+            {
+                string lang = regex.Match(voiceName).Value.Substring(1);
+                return String.Format("{0} speed:{1}", lang, speakSpead);
+            }
         }
     }
 }

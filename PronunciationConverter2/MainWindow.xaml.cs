@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Speech.Recognition;
@@ -10,6 +11,7 @@ using Microsoft.Win32;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace PronunciationConverter2
 {
@@ -25,16 +27,15 @@ namespace PronunciationConverter2
         private string[] ngWords;
         private ObservableCollection<RecognitionResult> results;
         private ObservableCollection<SettingSnapshot> settings;
-        private BlockingCollection<Tuple<RecognitionResult, SettingSnapshot>> speakQueue;
 
         public MainWindow()
         {
             InitializeComponent();
-            
+
             ngWords = global::PronunciationConverter2.Properties.Resources.UsePhoneme.Split(',');
 
             results = new ObservableCollection<RecognitionResult>();
-            historyList.ItemsSource = results;
+            resultsList.ItemsSource = results;
 
             synthesizer = new SpeechSynthesizer();
             player = new SoundPlayer();
@@ -46,25 +47,6 @@ namespace PronunciationConverter2
             selectVoice.SelectedIndex = 0;
 
             initSettings();
-            initRealtimeSpeaker();
-        }
-
-        private void play()
-        {
-            if (inputFilePath.Text.EndsWith(".wav"))
-            {
-                player = new SoundPlayer(inputFilePath.Text);
-                player.Play();
-            }
-        }
-
-        private void stop()
-        {
-            if (player != null)
-            {
-                player.Stop();
-                speakQueue.TakeWhile(item => true);
-            }
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -74,6 +56,7 @@ namespace PronunciationConverter2
         private void recognizeFile()
         {
             initRecognizer();
+            results.Clear();
 
             if (inputFilePath.Text.Length > 0)
             {
@@ -82,12 +65,14 @@ namespace PronunciationConverter2
             }
         }
 
-        private void startRecognizing()
+        private void recognizeOnce()
         {
             initRecognizer();
 
             recognizer.SetInputToDefaultAudioDevice();
-            recognizer.RecognizeAsync(RecognizeMode.Multiple);
+            RecognitionResult r = recognizer.Recognize();
+//            results.Add(r);
+            speakResults(new List<RecognitionResult> { r });
         }
 
         private void initRecognizer()
@@ -100,92 +85,61 @@ namespace PronunciationConverter2
             g.Enabled = true;
             recognizer.LoadGrammar(g);
             recognizer.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(sre_SpeechRecognized);
-
-            results.Clear();
         }
 
 
         void sre_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
             results.Add(e.Result);
-            if (realtimeMode.IsChecked == true)
-            {
-                speakRealtime(e.Result);
-            }
         }
 
         ///////////////////////////////////////////////////////////////////////
-        // Speak
+        // Synthesis
         ///////////////////////////////////////////////////////////////////////
 
-        private void initRealtimeSpeaker()
-        {
-            speakQueue = new BlockingCollection<Tuple<RecognitionResult, SettingSnapshot>>();
-
-            Task.Factory.StartNew(() =>
-            {
-                while (true)
-                {
-                    Tuple<RecognitionResult, SettingSnapshot> t = speakQueue.Take();
-                    string voiceLang = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name == t.Item2.voiceName).VoiceInfo.Culture.ToString();
-                    feedSynthesizer(t.Item1, t.Item2.usePhoneme, voiceLang);
-                    player.Stream.Position = 0;
-                    player.PlaySync();
-                }
-            });
-        }
-
-        private void speakRealtime(RecognitionResult r)
-        {
-            if (speakQueue.Count == 0) initSynthesizer(false);
-            speakQueue.Add(new Tuple<RecognitionResult, SettingSnapshot>(r, snap()));
-        }
-
-        private void speak(bool toFile)
+        private void speakResults(List<RecognitionResult> rs)
         {
             if (results.Count > 0)
             {
-                initSynthesizer(toFile);
-                bool b = usePhoneme.IsChecked == true;
-                string voiceString = (selectVoice.SelectedItem as VoiceInfo).Culture.ToString();
-                foreach (RecognitionResult r in results) feedSynthesizer(r, b, voiceString);
-                if (toFile)
-                {
-                    synthesizer.SetOutputToNull(); // release file lock
-                    MessageBox.Show("Conversion finished.");
-                }
-                else
-                {
-                    player.Stream.Position = 0;
-                    player.Play();
-                }
-            }
-        }
-
-        private void initSynthesizer(bool toFile)
-        {
-            synthesizer.Volume = 100;
-            synthesizer.Rate = (int)rateSlider.Value;
-            synthesizer.SelectVoice((selectVoice.SelectedItem as VoiceInfo).Name);
-
-            if (toFile)
-            {
-                String fname = System.IO.Path.Combine(outputFilePath.Text, System.DateTime.Now.ToString("yyyyMMddHHmmss") + ".wav");
-                synthesizer.SetOutputToWaveFile(fname);
-            }
-            else
-            {
-                player.Stream = new System.IO.MemoryStream();
+                synthesizer.Volume = 100;
+                synthesizer.Rate = (int)rateSlider.Value;
+                synthesizer.SelectVoice((selectVoice.SelectedItem as VoiceInfo).Name);
+                player.Stream = new MemoryStream();
                 synthesizer.SetOutputToWaveStream(player.Stream);
+
+                feedSynthesizer(rs);
+
+                player.Stream.Position = 0;
+                player.Play();
             }
         }
 
-        private void feedSynthesizer(RecognitionResult r, Boolean usePhoneme, string voiceLang)
+        private void saveConverted(string dirPath)
         {
-            if (usePhoneme) synthesizer.Speak(buildPromptBuilder(r, voiceLang));
-            else synthesizer.Speak(r.Text);
+            if (results.Count > 0)
+            {
+                synthesizer.Volume = 100;
+                synthesizer.Rate = (int)rateSlider.Value;
+                synthesizer.SelectVoice((selectVoice.SelectedItem as VoiceInfo).Name);
+                synthesizer.SetOutputToWaveFile(Path.Combine(dirPath, "result.wav"));
+
+                feedSynthesizer(results.ToList());
+
+                synthesizer.SetOutputToNull(); // release file lock
+                MessageBox.Show("Conversion finished.");
+            }
         }
 
+        private void feedSynthesizer(List<RecognitionResult> rs)
+        {
+            bool b = usePhoneme.IsChecked == true;
+            string voiceLang = (selectVoice.SelectedItem as VoiceInfo).Culture.Name;
+            foreach (RecognitionResult r in rs)
+            {
+                if (b) synthesizer.Speak(buildPromptBuilder(r, voiceLang));
+                else synthesizer.Speak(r.Text);
+            }
+        }
 
         private PromptBuilder buildPromptBuilder(RecognitionResult result, string voiceLang)
         {
@@ -203,6 +157,57 @@ namespace PronunciationConverter2
             return pb;
         }
 
+
+        ///////////////////////////////////////////////////////////////////////
+        // Original voice (play, stop, and save)
+        ///////////////////////////////////////////////////////////////////////
+
+        private CancellationTokenSource canceller = new CancellationTokenSource();
+
+        private void play()
+        {
+            if (inputFilePath.Text.EndsWith(".wav"))
+            {
+                player = new SoundPlayer(inputFilePath.Text);
+                player.Play();
+            }
+        }
+
+        private void stop()
+        {
+            if (player != null)
+            {
+                player.Stop();
+                canceller.Cancel();
+            }
+        }
+
+        private void playOriginal()
+        {
+            List<RecognizedAudio> lst = new List<RecognizedAudio>();
+            foreach (RecognitionResult r in results) lst.Add(r.Audio);
+
+            Task t = Task.Factory.StartNew(() =>
+            {
+                foreach (RecognizedAudio a in lst)
+                {
+                    if (canceller.Token.IsCancellationRequested) break;
+                    player.Stream = new MemoryStream();
+                    a.WriteToWaveStream(player.Stream);
+                    player.Stream.Position = 0;
+                    player.PlaySync();
+                }
+            }, canceller.Token);
+        }
+
+        private void saveOriginal(string dirPath)
+        {
+            foreach (RecognitionResult r in results)
+            {
+                string path = Path.Combine(dirPath, r.Audio.StartTime.ToString("yyyyMMdd_HHmmss") + ".wav");
+                using (FileStream s = File.Create(path)) r.Audio.WriteToWaveStream(s);
+            }
+        }
 
         ///////////////////////////////////////////////////////////////////////
         // Setting
@@ -225,33 +230,23 @@ namespace PronunciationConverter2
             return new SettingSnapshot()
             {
                 createdAt = System.DateTime.Now,
-                inputFromFile = inputFromFile.IsChecked == true,
-                inputFromMicrophone = inputFromMicrophone.IsChecked == true,
+                selectedTabIndex = inputTab.SelectedIndex,
                 inputFilePath = inputFilePath.Text,
-                outputToFile = outputToFile.IsChecked == true,
-                outputToSpeaker = outputToSpeaker.IsChecked == true,
-                outputFilePath = outputFilePath.Text,
+                outputFolderPath = outputFolderPath.Text,
                 usePhoneme = usePhoneme.IsChecked == true,
                 voiceName = (selectVoice.SelectedItem as VoiceInfo).Name,
                 speakSpead = (int)rateSlider.Value,
-                realtimeMode = realtimeMode.IsChecked == true,
-                manualMode = manualMode.IsChecked == true
             };
         }
 
         private void restoreSetting(SettingSnapshot s)
         {
-            inputFromFile.IsChecked = s.inputFromFile;
-            inputFromMicrophone.IsChecked = s.inputFromMicrophone;
             inputFilePath.Text = s.inputFilePath;
-            outputToSpeaker.IsChecked = s.outputToSpeaker;
-            outputToFile.IsChecked = s.outputToFile;
-            outputFilePath.Text = s.outputFilePath;
+            inputTab.SelectedIndex = s.selectedTabIndex;
+            outputFolderPath.Text = s.outputFolderPath;
             usePhoneme.IsChecked = s.usePhoneme;
             selectVoice.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name == s.voiceName).VoiceInfo;
             rateSlider.Value = s.speakSpead;
-            realtimeMode.IsChecked = s.realtimeMode;
-            manualMode.IsChecked = s.manualMode;
         }
 
         private void saveSettings()
@@ -281,7 +276,12 @@ namespace PronunciationConverter2
 
         private void selectFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            outputFilePath.Text = FolderSelector.select();
+            outputFolderPath.Text = FolderSelector.select(outputFolderPath.Text);
+        }
+
+        private void outputFolderPath_PreviewMouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            System.Diagnostics.Process.Start("explorer.exe", string.Format("/root,\"{0}\"", outputFolderPath.Text));
         }
 
         private void playButton_Click(object sender, RoutedEventArgs e)
@@ -289,33 +289,21 @@ namespace PronunciationConverter2
             play();
         }
 
-        private void startButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (inputFromFile.IsChecked == true) recognizeFile();
-            else if (inputFromMicrophone.IsChecked == true) startRecognizing();
-        }
-
         private void stopButton_Click(object sender, RoutedEventArgs e)
         {
             stop();
         }
 
-        private void speakButton_Click(object sender, RoutedEventArgs e)
+        private void listenButton_Click(object sender, RoutedEventArgs e)
         {
-            if (outputToFile.IsChecked == true) speak(true);
-            else if (outputToSpeaker.IsChecked == true) speak(false);
+            listenButton.IsEnabled = false;
+            recognizeOnce();
+            listenButton.IsEnabled = true;
         }
 
-        private void historyList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void listenFileButton_Click(object sender, RoutedEventArgs e)
         {
-            if (e.AddedItems.Count > 0)
-            {
-                RecognitionResult r = e.AddedItems[0] as RecognitionResult;
-                ObservableCollection<RecognizedWordUnit> words = new ObservableCollection<RecognizedWordUnit>(r.Words);
-                ObservableCollection<RecognizedPhrase> alternates = new ObservableCollection<RecognizedPhrase>(r.Alternates);
-
-                dataGrid.ItemsSource = alternates;
-            }
+            recognizeFile();
         }
 
         private void dataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -340,6 +328,25 @@ namespace PronunciationConverter2
                 SettingSnapshot s = e.AddedItems[0] as SettingSnapshot;
                 restoreSetting(s);
             }
+        }
+
+        private void playConvertedButton_Click(object sender, RoutedEventArgs e)
+        {
+            speakResults(results.ToList());
+        }
+
+        private void playOriginalButton_Click(object sender, RoutedEventArgs e)
+        {
+            playOriginal();
+        }
+
+        private void saveButton_Click(object sender, RoutedEventArgs e)
+        {
+            string dirPath = Path.Combine(outputFolderPath.Text, DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+
+            saveConverted(dirPath);
+            saveOriginal(dirPath);
         }
     }
 }

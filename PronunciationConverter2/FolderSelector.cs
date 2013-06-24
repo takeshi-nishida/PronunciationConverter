@@ -8,13 +8,13 @@ namespace PronunciationConverter2
 {
     class FolderSelector
     {
-        public static String select()
+        public static String select(string defaultPath)
         {
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 return dialog.SelectedPath;
             else
-                return "";
+                return defaultPath;
         }
     }
 }

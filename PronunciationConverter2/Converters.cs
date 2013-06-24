@@ -7,34 +7,34 @@ using System.Speech.Recognition;
 
 namespace PronunciationConverter2
 {
-    public class PlayButtonConverter : IMultiValueConverter
+    public class EndsWithWavConverter : IValueConverter
     {
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return ((bool)values[0]) && ((string)values[1]).EndsWith(".wav") && !((bool)values[2]);
+            return ((string) value).EndsWith(".wav");
         }
 
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             return null;
         }
     }
 
 
-    public class StartButtonConverter : IMultiValueConverter
+    public class GreaterThanZeroConverter : IValueConverter
     {
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return ((bool)values[0]) || ((bool)values[1]);
+            return ((int) value) > 0;
         }
 
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             return null;
         }
     }
 
-    public class CollectionConverter : IValueConverter
+    public class JapanizeWordsConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
