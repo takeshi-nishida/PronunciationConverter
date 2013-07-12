@@ -15,7 +15,8 @@ namespace PronunciationConverter2
         public string inputFilePath { get; set; }
         public string outputFolderPath { get; set; }
         public bool usePhoneme { get; set; }
-        public string voiceName { get; set; }
+        public string inputCulture { get; set; }
+        public string outputCulture { get; set; }
         public int speakSpead { get; set; }
 
 
@@ -53,8 +54,8 @@ namespace PronunciationConverter2
         {
             get
             {
-                string lang = regex.Match(voiceName).Value.Substring(1);
-                return String.Format("{0} speed:{1}", lang, speakSpead);
+                string lang = regex.Match(outputCulture).Value.Substring(1);
+                return String.Format("{0} → {1} speed:{2}", inputCulture, lang, speakSpead);
             }
         }
     }
