@@ -12,6 +12,8 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Windows.Input;
+using System.Globalization;
 
 namespace PronunciationConverter2
 {
@@ -20,7 +22,7 @@ namespace PronunciationConverter2
     /// </summary>
     public partial class MainWindow : Window
     {
-        private SoundPlayer player;
+        private SoundPlayer player, startSound;
         private SpeechRecognitionEngine recognizer;
         private SpeechSynthesizer synthesizer;
 
@@ -39,14 +41,22 @@ namespace PronunciationConverter2
 
             synthesizer = new SpeechSynthesizer();
             player = new SoundPlayer();
+            startSound = new SoundPlayer(Properties.Resources.start);
 
-            foreach (InstalledVoice voice in synthesizer.GetInstalledVoices())
-            {
-                selectVoice.Items.Add(voice.VoiceInfo);
-            }
-            selectVoice.SelectedIndex = 0;
-
+            initCultures();
             initSettings();
+        }
+
+        private void initCultures()
+        {
+            // Recognizer cultures
+            inputCulture.ItemsSource = SpeechRecognitionEngine.InstalledRecognizers()
+                .Where(info => info.Culture.TwoLetterISOLanguageName.Equals("en")).Select(info => info.Culture);
+            inputCulture.SelectedIndex = 0;
+
+            // Synthesizer cultures
+            outputCulture.ItemsSource = synthesizer.GetInstalledVoices().Select(v => v.VoiceInfo);
+            outputCulture.SelectedIndex = 0;
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -68,18 +78,18 @@ namespace PronunciationConverter2
         private void recognizeOnce()
         {
             initRecognizer();
-
+            startSound.PlaySync();
             recognizer.SetInputToDefaultAudioDevice();
             RecognitionResult r = recognizer.Recognize();
-//            results.Add(r);
             speakResults(new List<RecognitionResult> { r });
         }
 
         private void initRecognizer()
         {
-            recognizer = new SpeechRecognitionEngine(new System.Globalization.CultureInfo("en-US"));
+            CultureInfo culture = inputCulture.SelectedItem as CultureInfo;
+            recognizer = new SpeechRecognitionEngine(culture);
             GrammarBuilder gb = new GrammarBuilder();
-            gb.Culture = System.Globalization.CultureInfo.CreateSpecificCulture("en-US");
+            gb.Culture = culture;
             gb.AppendDictation();
             Grammar g = new Grammar(gb);
             g.Enabled = true;
@@ -103,7 +113,7 @@ namespace PronunciationConverter2
             {
                 synthesizer.Volume = 100;
                 synthesizer.Rate = (int)rateSlider.Value;
-                synthesizer.SelectVoice((selectVoice.SelectedItem as VoiceInfo).Name);
+                synthesizer.SelectVoice((outputCulture.SelectedItem as VoiceInfo).Name);
                 player.Stream = new MemoryStream();
                 synthesizer.SetOutputToWaveStream(player.Stream);
 
@@ -120,7 +130,7 @@ namespace PronunciationConverter2
             {
                 synthesizer.Volume = 100;
                 synthesizer.Rate = (int)rateSlider.Value;
-                synthesizer.SelectVoice((selectVoice.SelectedItem as VoiceInfo).Name);
+                synthesizer.SelectVoice((outputCulture.SelectedItem as VoiceInfo).Name);
                 synthesizer.SetOutputToWaveFile(Path.Combine(dirPath, "result.wav"));
 
                 feedSynthesizer(results.ToList());
@@ -133,7 +143,7 @@ namespace PronunciationConverter2
         private void feedSynthesizer(List<RecognitionResult> rs)
         {
             bool b = usePhoneme.IsChecked == true;
-            string voiceLang = (selectVoice.SelectedItem as VoiceInfo).Culture.Name;
+            string voiceLang = (outputCulture.SelectedItem as VoiceInfo).Culture.Name;
             foreach (RecognitionResult r in rs)
             {
                 if (b) synthesizer.Speak(buildPromptBuilder(r, voiceLang));
@@ -234,7 +244,8 @@ namespace PronunciationConverter2
                 inputFilePath = inputFilePath.Text,
                 outputFolderPath = outputFolderPath.Text,
                 usePhoneme = usePhoneme.IsChecked == true,
-                voiceName = (selectVoice.SelectedItem as VoiceInfo).Name,
+                inputCulture = (inputCulture.SelectedItem as CultureInfo).Name,
+                outputCulture = (outputCulture.SelectedItem as VoiceInfo).Name,
                 speakSpead = (int)rateSlider.Value,
             };
         }
@@ -245,7 +256,8 @@ namespace PronunciationConverter2
             inputTab.SelectedIndex = s.selectedTabIndex;
             outputFolderPath.Text = s.outputFolderPath;
             usePhoneme.IsChecked = s.usePhoneme;
-            selectVoice.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name == s.voiceName).VoiceInfo;
+            inputCulture.SelectedItem = SpeechRecognitionEngine.InstalledRecognizers().First(r => r.Culture.Name.Equals(s.inputCulture)).Culture;
+            outputCulture.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name.Equals(s.outputCulture)).VoiceInfo;
             rateSlider.Value = s.speakSpead;
         }
 
@@ -347,6 +359,12 @@ namespace PronunciationConverter2
 
             saveConverted(dirPath);
             saveOriginal(dirPath);
+        }
+
+        private void ItemOnPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            RecognitionResult r = (sender as ListBoxItem).Content as RecognitionResult;
+            speakResults(new List<RecognitionResult> { r });
         }
     }
 }

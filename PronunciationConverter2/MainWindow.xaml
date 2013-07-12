@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:PronunciationConverter2"
-        Title="Pronunciation Converter prototype 2" Height="500" Width="640" ResizeMode="CanResizeWithGrip">
+        Title="Pronunciation Converter prototype 2" Height="400" Width="640" ResizeMode="CanResizeWithGrip">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="300" />
@@ -21,6 +21,9 @@
                         <Setter Property="Background" Value="LightPink" />
                     </Trigger>
                 </Style.Triggers>
+                <Style.Setters>
+                    <EventSetter Event="PreviewMouseDown" Handler="ItemOnPreviewMouseDown" />
+                </Style.Setters>
             </Style>
             <Style x:Key="FileReadyStyle" TargetType="Button">
                 <Style.Setters>
@@ -56,10 +59,16 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <Grid Grid.Row="2" Margin="0,0,10,10" HorizontalAlignment="Right">
-                <Button Content="Play converted" Height="23" HorizontalAlignment="Left" Margin="6,6,0,0" Name="playConvertedButton" VerticalAlignment="Top" Width="100" Click="playConvertedButton_Click" Style="{StaticResource ResultsReadyStyle}" />
-                <Button Content="Play original" Height="23" HorizontalAlignment="Left" Margin="112,6,0,0" Name="playOriginalButton" VerticalAlignment="Top" Width="100" Click="playOriginalButton_Click" Style="{StaticResource ResultsReadyStyle}" />
-                <Button Content="Save all" Height="23" HorizontalAlignment="Left" Margin="218,6,0,0" Name="saveButton" VerticalAlignment="Top" Width="80" Click="saveButton_Click" Style="{StaticResource ResultsReadyStyle}" />
+            <Grid Grid.Row="2" Margin="0,0,10,10" HorizontalAlignment="Stretch">
+                <Expander HorizontalAlignment="Stretch" Width="Auto" VerticalAlignment="Bottom" ExpandDirection="Up" IsExpanded="False" Margin="6,6,0,0">
+                    <Grid>
+                        <TextBox Height="24" HorizontalAlignment="Right" Margin="6,0,72,33" Name="outputFolderPath" VerticalAlignment="Bottom" Width="220" PreviewMouseDoubleClick="outputFolderPath_PreviewMouseDoubleClick" />
+                        <Button Content="Browse" Height="23" HorizontalAlignment="Right" Margin="0,6,0,34" Name="selectFolderButton" VerticalAlignment="Bottom" Width="60" Click="selectFolderButton_Click" />
+                        <Button Content="Save" Height="23" HorizontalAlignment="Right" Margin="0,6,0,6" Name="saveButton" VerticalAlignment="Bottom" Width="60" Click="saveButton_Click" Style="{StaticResource ResultsReadyStyle}" />
+                    </Grid>
+                </Expander>
+                <Button Content="Play converted" Height="23" HorizontalAlignment="Right" Margin="0,0,106,0" Name="playConvertedButton" VerticalAlignment="Bottom" Width="100" Click="playConvertedButton_Click" Style="{StaticResource ResultsReadyStyle}" />
+                <Button Content="Play original" Height="23" HorizontalAlignment="Right" Margin="0,0,0,0" Name="playOriginalButton" VerticalAlignment="Bottom" Width="100" Click="playOriginalButton_Click" Style="{StaticResource ResultsReadyStyle}" />
             </Grid>
             <!--<Label Content="Alternates" Grid.Row="2" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" />
             <DataGrid Name="dataGrid" Grid.Row="3" AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" SelectionChanged="dataGrid_SelectionChanged">
@@ -69,44 +78,42 @@
                 </DataGrid.Columns>
             </DataGrid>-->
         </Grid>
-        <GroupBox Header="Conversion settings" Height="174" HorizontalAlignment="Left" Margin="6,12,0,0" VerticalAlignment="Top" Width="283">
+        
+        <ComboBox Height="24" HorizontalAlignment="Left" Margin="8,12,0,0" Name="settingBox" VerticalAlignment="Top" Width="185" DisplayMemberPath="name" SelectionChanged="settingBox_SelectionChanged" />
+        <Button Content="Save settings" Height="24" HorizontalAlignment="Right" Margin="0,12,9,0" Name="saveSettingButton" VerticalAlignment="Top" Width="92" Click="saveSettingButton_Click" />
+        
+        <GroupBox Header="Conversion parameters" Height="174" HorizontalAlignment="Left" Margin="8,42,0,0" VerticalAlignment="Top" Width="283">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="30*" />
-                    <ColumnDefinition Width="241*" />
-                </Grid.ColumnDefinitions>
-                <Button Content="Save settings" Height="24" HorizontalAlignment="Left" Margin="6,6,0,0" Name="saveSettingButton" VerticalAlignment="Top" Width="92" Click="saveSettingButton_Click" Grid.ColumnSpan="2" />
-                <ComboBox Height="24" HorizontalAlignment="Left" Margin="75,6,0,0" Name="settingBox" VerticalAlignment="Top" Width="159" DisplayMemberPath="name" SelectionChanged="settingBox_SelectionChanged" Grid.Column="1" />
-                <ComboBox Height="24" HorizontalAlignment="Left" Margin="75,40,0,0" Name="selectVoice" VerticalAlignment="Top" Width="159" DisplayMemberPath="Culture" Grid.Column="1" />
-                <Label Content="Voice culture:" Height="28" HorizontalAlignment="Left" Margin="6,40,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2" />
-                <Label Content="Speak speed:" Height="28" HorizontalAlignment="Left" Margin="6,73,0,0" Name="label1" VerticalAlignment="Top" Grid.ColumnSpan="2" />
-                <Slider Height="23" HorizontalAlignment="Left" Margin="75,78,0,0" Name="rateSlider" VerticalAlignment="Top" Width="159" Minimum="-5" SmallChange="1" IsSnapToTickEnabled="True" Maximum="5" TickPlacement="BottomRight" Grid.Column="1" />
-                <CheckBox Content="Use phoneme level conversion" Height="16" HorizontalAlignment="Left" Margin="6,118,0,0" Name="usePhoneme" VerticalAlignment="Top" IsChecked="True" Grid.ColumnSpan="2" />
+                <Label Content="Input voice" Height="28" HorizontalAlignment="Left" Margin="5,6,0,0" VerticalAlignment="Top" />
+                <ComboBox Height="24" HorizontalAlignment="Left" Margin="95,6,0,0" Name="inputCulture" VerticalAlignment="Top" Width="166" DisplayMemberPath="NativeName" />
+                <Label Content="Output voice" Height="28" HorizontalAlignment="Left" Margin="5,40,0,0" VerticalAlignment="Top" />
+                <ComboBox Height="24" HorizontalAlignment="Left" Margin="95,40,0,0" Name="outputCulture" VerticalAlignment="Top" Width="167" DisplayMemberPath="Culture.NativeName" />
+                <Label Content="Speak speed" Height="28" HorizontalAlignment="Left" Margin="6,73,0,0" Name="label1" VerticalAlignment="Top" />
+                <Slider Height="23" HorizontalAlignment="Left" Margin="95,78,0,0" Name="rateSlider" VerticalAlignment="Top" Width="167" Minimum="-5" SmallChange="1" IsSnapToTickEnabled="True" Maximum="5" TickPlacement="BottomRight" />
+                <CheckBox Content="Use phoneme level conversion" Height="16" HorizontalAlignment="Left" Margin="6,115,0,0" Name="usePhoneme" VerticalAlignment="Top" IsChecked="True" />    
             </Grid>
         </GroupBox>
-        <TabControl Height="191" HorizontalAlignment="Left" Margin="7,260,0,0" Name="inputTab" VerticalAlignment="Top" Width="282">
+        <TabControl Height="113" HorizontalAlignment="Left" Margin="9,0,0,5" Name="inputTab" VerticalAlignment="Bottom" Width="282">
             <TabItem Header="Convert speech" Name="tabItem1">
                 <Grid>
-                    <Button HorizontalAlignment="Right" Margin="0,0,6,6" Name="listenButton" VerticalAlignment="Bottom" Click="listenButton_Click"  Style="{StaticResource ImageEnabled}">
-                        <Image Name="MicrophoneImage" Source="microphone.png" Width="80" Height="80" />
+                    <Button HorizontalAlignment="Center" Margin="0,0,6,6" Name="listenButton" VerticalAlignment="Bottom" Click="listenButton_Click"  Style="{StaticResource ImageEnabled}">
+                        <Image Name="MicrophoneImage" Source="microphone.png" Width="60" Height="60" />
                     </Button>
                 </Grid>
             </TabItem>
             <TabItem Header="Convert wav file">
                 <Grid>
-                    <Button Content="Select" Height="23" HorizontalAlignment="Left" Margin="6,6,0,0" Name="selectFileButton" VerticalAlignment="Top" Width="60" Click="selectFileButton_Click" />
-                    <TextBox Height="24" HorizontalAlignment="Left" Margin="72,6,0,0" Name="inputFilePath" VerticalAlignment="Top" Width="194" />
-                    <Button Click="playButton_Click" Content="Play" Height="23" HorizontalAlignment="Left" Name="playFileButton" VerticalAlignment="Top" Width="60" Margin="142,36,0,0" Style="{StaticResource FileReadyStyle}" />
-                    <Button Click="listenFileButton_Click" Content="Start conversion" Height="23" HorizontalAlignment="Left"  Name="listenFileButton" VerticalAlignment="Bottom" Width="114" Margin="152,0,0,6" Style="{StaticResource FileReadyStyle}" />
-                    <Button Click="stopButton_Click" Content="Stop" Height="23" HorizontalAlignment="Left" Name="stopButton" VerticalAlignment="Top" Width="60" Margin="206,36,0,0" Style="{StaticResource FileReadyStyle}" />
+                    <Button Content="Browse" Height="23" HorizontalAlignment="Left" Margin="206,6,0,0" Name="selectFileButton" VerticalAlignment="Top" Width="60" Click="selectFileButton_Click" />
+                    <TextBox Height="24" HorizontalAlignment="Left" Margin="6,6,0,0" Name="inputFilePath" VerticalAlignment="Top" Width="194" />
+                    <Button Click="playButton_Click" Height="23" HorizontalAlignment="Left" Name="playFileButton" VerticalAlignment="Top" Width="48" Margin="76,36,0,0" Style="{StaticResource FileReadyStyle}">
+                        <Polygon Points="0,0,14,7,0,14" Fill="Black" />
+                    </Button>
+                    <Button Click="stopButton_Click" Height="23" HorizontalAlignment="Left" Name="stopButton" VerticalAlignment="Top" Width="48" Margin="130,36,0,0" Style="{StaticResource FileReadyStyle}">
+                        <Rectangle Width="14" Height="14" Fill="Black" />
+                    </Button>
+                    <Button Click="listenFileButton_Click" Content="Recognize" Height="23" HorizontalAlignment="Left"  Name="listenFileButton" VerticalAlignment="Top" Width="80" Margin="186,36,0,0" Style="{StaticResource FileReadyStyle}" />
                 </Grid>
             </TabItem>
         </TabControl>
-        <GroupBox Header="Output folder" Height="62" HorizontalAlignment="Left" Margin="7,192,0,0" VerticalAlignment="Top" Width="282">
-            <Grid>
-                <TextBox Height="24" HorizontalAlignment="Right" Margin="0,6,7,0" Name="outputFolderPath" VerticalAlignment="Top" Width="192" PreviewMouseDoubleClick="outputFolderPath_PreviewMouseDoubleClick" />
-                <Button Content="Select" Height="23" HorizontalAlignment="Left" Margin="5,6,0,0" Name="selectFolderButton" VerticalAlignment="Top" Width="60" Click="selectFolderButton_Click" />
-            </Grid>
-        </GroupBox>
     </Grid>
 </Window>
