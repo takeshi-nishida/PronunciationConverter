@@ -26,8 +26,10 @@ namespace PronunciationConverter2
             foreach (string fname in Directory.GetFiles(getExecutingPath(), "*.xml"))
             {
                 XmlSerializer reader = new XmlSerializer(typeof(SettingSnapshot));
-                StreamReader file = new StreamReader(fname);
-                ls.Add((SettingSnapshot)reader.Deserialize(file));
+                using (StreamReader file = new StreamReader(fname))
+                {
+                    ls.Add((SettingSnapshot)reader.Deserialize(file));
+                }
             }
             return ls;
         }
@@ -38,9 +40,10 @@ namespace PronunciationConverter2
         {
             XmlSerializer writer = new XmlSerializer(typeof(SettingSnapshot));
             string fname = Path.Combine(getExecutingPath(), createdAt.ToString("yyyyMMddHHmmss") + ".xml");
-            StreamWriter file = new StreamWriter(fname);
-            writer.Serialize(file, this);
-            file.Close();
+            using (StreamWriter file = new StreamWriter(fname))
+            {
+                writer.Serialize(file, this);
+            }
         }
 
         private static string getExecutingPath()
