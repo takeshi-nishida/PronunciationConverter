@@ -78,7 +78,8 @@ namespace PronunciationConverter2
         private void recognizeOnce()
         {
             initRecognizer();
-            startSound.PlaySync();
+//            startSound.PlaySync();
+            startSound.Play();
             recognizer.SetInputToDefaultAudioDevice();
             RecognitionResult r = recognizer.Recognize();
             speakResults(new List<RecognitionResult> { r });
@@ -111,9 +112,7 @@ namespace PronunciationConverter2
         {
             if (results.Count > 0)
             {
-                synthesizer.Volume = 100;
-                synthesizer.Rate = (int)rateSlider.Value;
-                synthesizer.SelectVoice((outputCulture.SelectedItem as VoiceInfo).Name);
+                initSynthesizer();
                 player.Stream = new MemoryStream();
                 synthesizer.SetOutputToWaveStream(player.Stream);
 
@@ -128,16 +127,27 @@ namespace PronunciationConverter2
         {
             if (results.Count > 0)
             {
-                synthesizer.Volume = 100;
-                synthesizer.Rate = (int)rateSlider.Value;
-                synthesizer.SelectVoice((outputCulture.SelectedItem as VoiceInfo).Name);
+                initSynthesizer();
                 synthesizer.SetOutputToWaveFile(Path.Combine(dirPath, "result.wav"));
-
                 feedSynthesizer(results.ToList());
+                synthesizer.SetOutputToNull(); // release file lock (is this required?)
 
-                synthesizer.SetOutputToNull(); // release file lock
-                MessageBox.Show("Conversion finished.");
+                foreach (RecognitionResult r in results)
+                {
+                    string c = (outputCulture.SelectedItem as VoiceInfo).Culture.TwoLetterISOLanguageName;
+                    string path = Path.Combine(dirPath, c + r.Audio.StartTime.ToString("yyyyMMdd_HHmmss") + ".wav");
+                    synthesizer.SetOutputToWaveFile(path);
+                    feedSynthesizer(new List<RecognitionResult> { r });
+                    synthesizer.SetOutputToNull(); // release file lock (is this required?)
+                }
             }
+        }
+
+        private void initSynthesizer()
+        {
+            synthesizer.Volume = 100;
+            synthesizer.Rate = (int)rateSlider.Value;
+            synthesizer.SelectVoice((outputCulture.SelectedItem as VoiceInfo).Name);
         }
 
         private void feedSynthesizer(List<RecognitionResult> rs)
@@ -270,6 +280,22 @@ namespace PronunciationConverter2
         }
 
         ///////////////////////////////////////////////////////////////////////
+        // Other features
+        ///////////////////////////////////////////////////////////////////////
+        private void saveText(string dirPath)
+        {
+            using (StreamWriter sw = File.CreateText(Path.Combine(dirPath, "result.txt")))
+            {
+                foreach (RecognitionResult r in results)
+                {
+                    string before = String.Join(" ", r.Words.Select(w => w.Pronunciation));
+                    string after = String.Join(" ", r.Words.Select(w => Japanizer.japanize(w.Pronunciation, w.Text)));
+                    sw.WriteLine(String.Join(",", new[] { r.Text, before, after }));
+                }
+            }
+        }
+
+        ///////////////////////////////////////////////////////////////////////
         // UI event handlers
         ///////////////////////////////////////////////////////////////////////
 
@@ -359,6 +385,8 @@ namespace PronunciationConverter2
 
             saveConverted(dirPath);
             saveOriginal(dirPath);
+            saveText(dirPath);
+            MessageBox.Show("Save finished.");
         }
 
         private void ItemOnPreviewMouseDown(object sender, MouseButtonEventArgs e)
