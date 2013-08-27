@@ -90,7 +90,8 @@
                 <ComboBox Height="24" HorizontalAlignment="Left" Margin="95,40,0,0" Name="outputCulture" VerticalAlignment="Top" Width="167" DisplayMemberPath="Culture.NativeName" />
                 <Label Content="Speak speed" Height="28" HorizontalAlignment="Left" Margin="6,73,0,0" Name="label1" VerticalAlignment="Top" />
                 <Slider Height="23" HorizontalAlignment="Left" Margin="95,78,0,0" Name="rateSlider" VerticalAlignment="Top" Width="167" Minimum="-5" SmallChange="1" IsSnapToTickEnabled="True" Maximum="5" TickPlacement="BottomRight" />
-                <CheckBox Content="Use phoneme level conversion" Height="16" HorizontalAlignment="Left" Margin="6,115,0,0" Name="usePhoneme" VerticalAlignment="Top" IsChecked="True" />    
+                <CheckBox Content="Japanizer" Height="16" HorizontalAlignment="Left" Margin="6,115,0,0" Name="useJapanizer" VerticalAlignment="Top" IsChecked="True" />
+                <CheckBox Content="Word by word" Height="16" HorizontalAlignment="Left" Margin="84,115,0,0" Name="wordByWord" VerticalAlignment="Top" />
             </Grid>
         </GroupBox>
         <TabControl Height="113" HorizontalAlignment="Left" Margin="9,0,0,5" Name="inputTab" VerticalAlignment="Bottom" Width="282">

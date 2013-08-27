@@ -9,35 +9,53 @@ namespace PronunciationConverter2
     class Japanizer
     {
         private const String oConsonants = "dt";
-        private const String uConsonants = "bfgklmpsvz";
+        private const String uConsonants = "bfgklmpsvzɽ";
         private const String consonants = oConsonants + uConsonants;
-        private const String sVowels = "aɪɯ";
-        private const String lVowels = "iuɛeo";
+        private const String sVowels = "ʌɪʊ";
+        private const String lVowels = "aiuɯɛeoː";
         private const String vowels = sVowels + lVowels;
 
         private static JapanizeRule[] rules =
         {
+            // R
+            new JapanizeRule("([iɪɛeʊuɯ])ɻ", "$1a"),
+            new JapanizeRule("([æɑɒɜaoɔ])ɻ$", "$1a"),
+            new JapanizeRule("([æɑɒɜaoɔ])ɻ", "$1ː"),
+
             // Vowels
-            new JapanizeRule("[æɑʌɒ]", "a"),
-            //new ReplaceRule("", "i"),
-            new JapanizeRule("[ʊ]", "ɯ"),
-            //new JapanizeRule("ɛ", "e"),
-            new JapanizeRule("ɔ", "o"),
+            new JapanizeRule("[ɑɒɜə]", "a"), // æ
+            //new JapanizeRule("ɪ", "iː"),
+            new JapanizeRule("i", "i"),
+            //new JapanizeRule("[ʊ]", "uː"),//"ɯ"),
+            new JapanizeRule("[uɯ]", "ɯ"),
+            new JapanizeRule("ɛ", "e"),
+            new JapanizeRule("[oɔ]", "o"),
+
+            // R
+            new JapanizeRule(String.Format("ɻ([{0}])", vowels), "l$1"),
 
             // Consonants
             new JapanizeRule("v", "b"),
             new JapanizeRule("θ", "s"),
             new JapanizeRule("ð", "z"),
-            
-            // R
-            new JapanizeRule(String.Format("[ɻ]([{0}])", vowels), "ɽ$1"),
-            new JapanizeRule("[ɻ˞]", "ː"),
+            new JapanizeRule("f", "ɸ"), // below was added 2013/8/26
+            new JapanizeRule("ʧ", "ʨ"), 
+            new JapanizeRule("ʍ", "w"), 
+            new JapanizeRule("s[iɪ]", "ʃi"),
+            new JapanizeRule("t[iɪ]", "ʧi"),
+            new JapanizeRule("t[uɯʊ]", "ʦɯ"),
 
-            // Two consonants in a row
+            // Conconant clusters at word beginning
+            new JapanizeRule(String.Format("^([{0}])([{1}])", uConsonants, consonants), "$1u$2"),
+            new JapanizeRule(String.Format("^([{0}])([{1}])", oConsonants, consonants), "$1o$2"),
+
+            // Consonant clusters in the middle of words
             new JapanizeRule(String.Format("([{0}])([{1}])([{2}])", sVowels, uConsonants, consonants), "$1$2$2ɯ$3"),
             new JapanizeRule(String.Format("([{0}])([{1}])([{2}])", lVowels, uConsonants, consonants), "$1$2ɯ$3"),
             new JapanizeRule(String.Format("([{0}])([{1}])([{2}])", sVowels, oConsonants, consonants), "$1$2$2o$3"),
             new JapanizeRule(String.Format("([{0}])([{1}])([{2}])", lVowels, oConsonants, consonants), "$1$2o$3"),
+            //new JapanizeRule(String.Format("([{0}])([{1}])", uConsonants, consonants), "$1ɯ$2"),
+            //new JapanizeRule(String.Format("([{0}])([{1}])", oConsonants, consonants), "$1o$2"),
 
             // Words ending with consonants
             new JapanizeRule(String.Format("([{0}])([{1}])$", sVowels, uConsonants), "$1$2$2ɯ"),
@@ -53,9 +71,9 @@ namespace PronunciationConverter2
 
         private static SpellingRule[] srules =
         {
-            new SpellingRule("d$", "([^d])$", "$1d"),
-            new SpellingRule("to$", "tə$", "tuː"),
-            new SpellingRule("or$", "[əɔ][ɻ˞]$", "ɔaː"),
+            new SpellingRule("^the$", "^.*$", "za"),    // example: "the"
+            new SpellingRule("d$", "([^d])$", "$1d"),   // example: "and", "end"
+            new SpellingRule("to$", "tə$", "tuː"),      // example: "to"
         };
 
         public static String japanize(String pronunciation, String spelling)
