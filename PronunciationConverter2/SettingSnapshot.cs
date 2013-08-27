@@ -14,7 +14,8 @@ namespace PronunciationConverter2
         public int selectedTabIndex { get; set; }
         public string inputFilePath { get; set; }
         public string outputFolderPath { get; set; }
-        public bool usePhoneme { get; set; }
+        public bool useJapanizer { get; set; }
+        public bool wordByWord { get; set; }
         public string inputCulture { get; set; }
         public string outputCulture { get; set; }
         public int speakSpead { get; set; }

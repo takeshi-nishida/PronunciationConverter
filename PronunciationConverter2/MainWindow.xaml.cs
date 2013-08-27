@@ -152,11 +152,10 @@ namespace PronunciationConverter2
 
         private void feedSynthesizer(List<RecognitionResult> rs)
         {
-            bool b = usePhoneme.IsChecked == true;
             string voiceLang = (outputCulture.SelectedItem as VoiceInfo).Culture.Name;
             foreach (RecognitionResult r in rs)
             {
-                if (b) synthesizer.Speak(buildPromptBuilder(r, voiceLang));
+                if (useJapanizer.IsChecked == true) synthesizer.Speak(buildPromptBuilder(r, voiceLang));
                 else synthesizer.Speak(r.Text);
             }
         }
@@ -167,11 +166,8 @@ namespace PronunciationConverter2
             pb.AppendSsmlMarkup(String.Format("<voice xml:lang='{0}'>", voiceLang));
             foreach (RecognizedWordUnit w in result.Words)
             {
-                //if (ngWords.Contains(w.Text))
-                //    pb.AppendTextWithPronunciation(w.Text, w.Pronunciation);
-                //else
-                //    pb.AppendText(w.Text + " ");
                 pb.AppendTextWithPronunciation(w.Text, Japanizer.japanize(w.Pronunciation, w.Text));
+                if (wordByWord.IsChecked == true) pb.AppendBreak(TimeSpan.FromMilliseconds(0.5));
             }
             pb.AppendSsmlMarkup("</voice>");
             return pb;
@@ -253,7 +249,8 @@ namespace PronunciationConverter2
                 selectedTabIndex = inputTab.SelectedIndex,
                 inputFilePath = inputFilePath.Text,
                 outputFolderPath = outputFolderPath.Text,
-                usePhoneme = usePhoneme.IsChecked == true,
+                useJapanizer = useJapanizer.IsChecked == true,
+                wordByWord = wordByWord.IsChecked == true,
                 inputCulture = (inputCulture.SelectedItem as CultureInfo).Name,
                 outputCulture = (outputCulture.SelectedItem as VoiceInfo).Name,
                 speakSpead = (int)rateSlider.Value,
@@ -265,7 +262,8 @@ namespace PronunciationConverter2
             inputFilePath.Text = s.inputFilePath;
             inputTab.SelectedIndex = s.selectedTabIndex;
             outputFolderPath.Text = s.outputFolderPath;
-            usePhoneme.IsChecked = s.usePhoneme;
+            useJapanizer.IsChecked = s.useJapanizer;
+            wordByWord.IsChecked = s.wordByWord;
             inputCulture.SelectedItem = SpeechRecognitionEngine.InstalledRecognizers().First(r => r.Culture.Name.Equals(s.inputCulture)).Culture;
             outputCulture.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name.Equals(s.outputCulture)).VoiceInfo;
             rateSlider.Value = s.speakSpead;
