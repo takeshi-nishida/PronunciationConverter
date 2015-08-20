@@ -6,7 +6,8 @@ using System.Media;
 using System.Speech.Recognition;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Speech.Synthesis;
+//using Microsoft.Speech.Synthesis;
+using System.Speech.Synthesis;
 using Microsoft.Win32;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -29,6 +30,7 @@ namespace PronunciationConverter2
         private string[] ngWords;
         private ObservableCollection<RecognitionResult> results;
         private ObservableCollection<SettingSnapshot> settings;
+        private ObservableCollection<Grammar> grammars;
 
         public MainWindow()
         {
@@ -44,6 +46,7 @@ namespace PronunciationConverter2
             startSound = new SoundPlayer(Properties.Resources.start);
 
             initCultures();
+            initGrammars();
             initSettings();
         }
 
@@ -57,6 +60,35 @@ namespace PronunciationConverter2
             // Synthesizer cultures
             outputCulture.ItemsSource = synthesizer.GetInstalledVoices().Select(v => v.VoiceInfo);
             outputCulture.SelectedIndex = 0;
+        }
+
+        private void initGrammars()
+        {
+            grammars = new ObservableCollection<Grammar>();
+            scenario.ItemsSource = grammars;
+
+            // Append "Free talk" grammar
+            GrammarBuilder gb = new GrammarBuilder();
+            CultureInfo culture = inputCulture.SelectedItem as CultureInfo;
+            gb.Culture = culture;
+            gb.AppendDictation();
+            Grammar g = new Grammar(gb);
+            g.Name = "Free talk";
+            grammars.Add(g);
+            scenario.SelectedItem = g;
+
+            // Load grammars
+            try
+            {
+                Directory.CreateDirectory(MainWindow.getExecutingPath("scenarios"));
+                foreach (string fname in Directory.GetFiles(MainWindow.getExecutingPath("scenarios"), "*.xml"))
+                {
+                    g = new Grammar(fname);
+                    g.Name = g.RuleName.Replace("_", " ");
+                    grammars.Add(g);
+                }
+            }
+            catch (Exception e) { Console.WriteLine(e.ToString()); }
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -88,14 +120,20 @@ namespace PronunciationConverter2
         private void initRecognizer()
         {
             CultureInfo culture = inputCulture.SelectedItem as CultureInfo;
-            recognizer = new SpeechRecognitionEngine(culture);
-            GrammarBuilder gb = new GrammarBuilder();
-            gb.Culture = culture;
-            gb.AppendDictation();
-            Grammar g = new Grammar(gb);
-            g.Enabled = true;
+            if (recognizer == null)
+            {
+                recognizer = new SpeechRecognitionEngine(culture);
+                recognizer.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(sre_SpeechRecognized);
+            }
+            //GrammarBuilder gb = new GrammarBuilder();
+            //gb.Culture = culture;
+            //gb.AppendDictation();
+            //Grammar g = new Grammar(gb);
+            //Grammar g = new Grammar(@"C:\Users\tnishida\Documents\Visual Studio 2013\Projects\PronunciationConverter\PronunciationConverter2\bin\Debug\grammars\example.xml");
+            //g.Enabled = true;
+            Grammar g = scenario.SelectedItem as Grammar;
+            recognizer.UnloadAllGrammars();
             recognizer.LoadGrammar(g);
-            recognizer.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(sre_SpeechRecognized);
         }
 
 
@@ -155,7 +193,7 @@ namespace PronunciationConverter2
             string voiceLang = (outputCulture.SelectedItem as VoiceInfo).Culture.Name;
             foreach (RecognitionResult r in rs)
             {
-                if (useJapanizer.IsChecked == true) synthesizer.Speak(buildPromptBuilder(r, voiceLang));
+                if (useJapanizer.IsChecked == true || wordByWord.IsChecked == true) synthesizer.Speak(buildPromptBuilder(r, voiceLang));
                 else synthesizer.Speak(r.Text);
             }
         }
@@ -166,7 +204,8 @@ namespace PronunciationConverter2
             pb.AppendSsmlMarkup(String.Format("<voice xml:lang='{0}'>", voiceLang));
             foreach (RecognizedWordUnit w in result.Words)
             {
-                pb.AppendTextWithPronunciation(w.Text, Japanizer.japanize(w.Pronunciation, w.Text));
+                if (useJapanizer.IsChecked == true) pb.AppendTextWithPronunciation(w.Text, Japanizer.japanize(w.Pronunciation, w.Text));
+                else pb.AppendText(w.Text);
                 if (wordByWord.IsChecked == true) pb.AppendBreak(TimeSpan.FromMilliseconds(0.5));
             }
             pb.AppendSsmlMarkup("</voice>");
@@ -252,8 +291,10 @@ namespace PronunciationConverter2
                 useJapanizer = useJapanizer.IsChecked == true,
                 wordByWord = wordByWord.IsChecked == true,
                 inputCulture = (inputCulture.SelectedItem as CultureInfo).Name,
-                outputCulture = (outputCulture.SelectedItem as VoiceInfo).Name,
+//                outputCulture = (outputCulture.SelectedItem as VoiceInfo).Name,
+                outputCulture = (outputCulture.SelectedItem as VoiceInfo).Culture.Name,
                 speakSpead = (int)rateSlider.Value,
+                scenarioName = scenario.SelectedIndex >= 0 ? (scenario.SelectedItem as Grammar).RuleName : ""
             };
         }
 
@@ -265,7 +306,9 @@ namespace PronunciationConverter2
             useJapanizer.IsChecked = s.useJapanizer;
             wordByWord.IsChecked = s.wordByWord;
             inputCulture.SelectedItem = SpeechRecognitionEngine.InstalledRecognizers().First(r => r.Culture.Name.Equals(s.inputCulture)).Culture;
-            outputCulture.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name.Equals(s.outputCulture)).VoiceInfo;
+//            outputCulture.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Name.Equals(s.outputCulture)).VoiceInfo;
+            outputCulture.SelectedItem = synthesizer.GetInstalledVoices().First(v => v.VoiceInfo.Culture.Name.Equals(s.outputCulture)).VoiceInfo;
+            scenario.SelectedItem = grammars.First(g => g.RuleName.Equals(s.scenarioName));
             rateSlider.Value = s.speakSpead;
         }
 
@@ -280,6 +323,11 @@ namespace PronunciationConverter2
         ///////////////////////////////////////////////////////////////////////
         // Other features
         ///////////////////////////////////////////////////////////////////////
+        public static string getExecutingPath(string name)
+        {
+            return Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), name);
+        }
+
         private void saveText(string dirPath)
         {
             using (StreamWriter sw = File.CreateText(Path.Combine(dirPath, "result.txt")))

@@ -15,10 +15,10 @@
             <Style x:Key="ContainerStyle" TargetType="{x:Type ListBoxItem}">
                 <Style.Triggers>
                     <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                        <Setter Property="Background" Value="Lavender" />
+                        <Setter Property="Background" Value="White" />
                     </Trigger>
                     <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                        <Setter Property="Background" Value="LightPink" />
+                        <Setter Property="Background" Value="LightGray" />
                     </Trigger>
                 </Style.Triggers>
                 <Style.Setters>
@@ -78,27 +78,29 @@
                 </DataGrid.Columns>
             </DataGrid>-->
         </Grid>
-        
+
         <ComboBox Height="24" HorizontalAlignment="Left" Margin="8,12,0,0" Name="settingBox" VerticalAlignment="Top" Width="185" DisplayMemberPath="name" SelectionChanged="settingBox_SelectionChanged" />
         <Button Content="Save settings" Height="24" HorizontalAlignment="Right" Margin="0,12,9,0" Name="saveSettingButton" VerticalAlignment="Top" Width="92" Click="saveSettingButton_Click" />
-        
-        <GroupBox Header="Conversion parameters" Height="174" HorizontalAlignment="Left" Margin="8,42,0,0" VerticalAlignment="Top" Width="283">
-            <Grid>
-                <Label Content="Input voice" Height="28" HorizontalAlignment="Left" Margin="5,6,0,0" VerticalAlignment="Top" />
+
+        <GroupBox Header="Conversion parameters" Height="205" HorizontalAlignment="Left" Margin="8,42,0,0" VerticalAlignment="Top" Width="283">
+            <Grid Margin="0,0,0.4,0.4">
+                <Label Content="Input voice" Height="28" HorizontalAlignment="Left" Margin="14,6,0,0" VerticalAlignment="Top" />
                 <ComboBox Height="24" HorizontalAlignment="Left" Margin="95,6,0,0" Name="inputCulture" VerticalAlignment="Top" Width="166" DisplayMemberPath="NativeName" />
-                <Label Content="Output voice" Height="28" HorizontalAlignment="Left" Margin="5,40,0,0" VerticalAlignment="Top" />
-                <ComboBox Height="24" HorizontalAlignment="Left" Margin="95,40,0,0" Name="outputCulture" VerticalAlignment="Top" Width="167" DisplayMemberPath="Culture.NativeName" />
+                <Label Content="Output voice" Height="28" HorizontalAlignment="Left" Margin="4,40,0,0" VerticalAlignment="Top" />
+                <ComboBox Height="24" HorizontalAlignment="Left" Margin="95,40,0,0" Name="outputCulture" VerticalAlignment="Top" Width="165" DisplayMemberPath="Culture.NativeName" />
                 <Label Content="Speak speed" Height="28" HorizontalAlignment="Left" Margin="6,73,0,0" Name="label1" VerticalAlignment="Top" />
                 <Slider Height="23" HorizontalAlignment="Left" Margin="95,78,0,0" Name="rateSlider" VerticalAlignment="Top" Width="167" Minimum="-5" SmallChange="1" IsSnapToTickEnabled="True" Maximum="5" TickPlacement="BottomRight" />
-                <CheckBox Content="Japanizer" Height="16" HorizontalAlignment="Left" Margin="6,115,0,0" Name="useJapanizer" VerticalAlignment="Top" IsChecked="True" />
-                <CheckBox Content="Word by word" Height="16" HorizontalAlignment="Left" Margin="84,115,0,0" Name="wordByWord" VerticalAlignment="Top" />
+                <CheckBox Content="Japanizer" Height="16" HorizontalAlignment="Left" Margin="6,115,0,0" Name="useJapanizer" VerticalAlignment="Top" />
+                <CheckBox Content="Word by word" Height="16" HorizontalAlignment="Left" Margin="95,115,0,0" Name="wordByWord" VerticalAlignment="Top" />
+                <ComboBox x:Name="scenario" HorizontalAlignment="Left" Margin="95,152,0,0" VerticalAlignment="Top" Width="165" DisplayMemberPath="Name" />
+                <Label Content="Scenario" HorizontalAlignment="Left" Margin="28,152,0,0" VerticalAlignment="Top"/>
             </Grid>
         </GroupBox>
-        <TabControl Height="113" HorizontalAlignment="Left" Margin="9,0,0,5" Name="inputTab" VerticalAlignment="Bottom" Width="282">
+        <TabControl Height="100" HorizontalAlignment="Left" Margin="9,0,0,10.4" Name="inputTab" VerticalAlignment="Bottom" Width="282">
             <TabItem Header="Convert speech" Name="tabItem1">
                 <Grid>
-                    <Button HorizontalAlignment="Center" Margin="0,0,6,6" Name="listenButton" VerticalAlignment="Bottom" Click="listenButton_Click"  Style="{StaticResource ImageEnabled}">
-                        <Image Name="MicrophoneImage" Source="microphone.png" Width="60" Height="60" />
+                    <Button Margin="25,10,25,10" Name="listenButton" VerticalAlignment="Bottom" Click="listenButton_Click"  Style="{StaticResource ImageEnabled}">
+                        <Image Name="MicrophoneImage" Source="microphone.png" Width="50" Height="50" />
                     </Button>
                 </Grid>
             </TabItem>
