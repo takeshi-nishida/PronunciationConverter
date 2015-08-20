@@ -19,19 +19,24 @@ namespace PronunciationConverter2
         public string inputCulture { get; set; }
         public string outputCulture { get; set; }
         public int speakSpead { get; set; }
+        public string scenarioName { get; set; }
 
 
         public static List<SettingSnapshot> loadSettingSnapshots()
         {
             List<SettingSnapshot> ls = new List<SettingSnapshot>();
-            foreach (string fname in Directory.GetFiles(getExecutingPath(), "*.xml"))
+            try
             {
-                XmlSerializer reader = new XmlSerializer(typeof(SettingSnapshot));
-                using (StreamReader file = new StreamReader(fname))
+                foreach (string fname in Directory.GetFiles(MainWindow.getExecutingPath("settings"), "*.xml"))
                 {
-                    ls.Add((SettingSnapshot)reader.Deserialize(file));
+                    XmlSerializer reader = new XmlSerializer(typeof(SettingSnapshot));
+                    using (StreamReader file = new StreamReader(fname))
+                    {
+                        ls.Add((SettingSnapshot)reader.Deserialize(file));
+                    }
                 }
             }
+            catch (Exception e) { Console.WriteLine(e.ToString()); }
             return ls;
         }
 
@@ -40,17 +45,14 @@ namespace PronunciationConverter2
         public void save()
         {
             XmlSerializer writer = new XmlSerializer(typeof(SettingSnapshot));
-            string fname = Path.Combine(getExecutingPath(), createdAt.ToString("yyyyMMddHHmmss") + ".xml");
+            Directory.CreateDirectory(MainWindow.getExecutingPath("settings"));
+            string fname = Path.Combine(MainWindow.getExecutingPath("settings"), createdAt.ToString("yyyyMMddHHmmss") + ".xml");
             using (StreamWriter file = new StreamWriter(fname))
             {
                 writer.Serialize(file, this);
             }
         }
 
-        private static string getExecutingPath()
-        {
-            return Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
-        }
 
         private static Regex regex = new Regex(@"\(.*,");
 
@@ -58,8 +60,8 @@ namespace PronunciationConverter2
         {
             get
             {
-                string lang = regex.Match(outputCulture).Value.Substring(1);
-                return String.Format("{0} → {1} speed:{2}", inputCulture, lang, speakSpead);
+//                string lang = regex.Match(outputCulture).Value;
+                return String.Format("{0} → {1} speed:{2}", inputCulture, outputCulture, speakSpead);
             }
         }
     }
